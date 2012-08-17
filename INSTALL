@@ -1,0 +1,19 @@
+1. Getting ucrypt :
+  Fork ucrypt from github by using git clone git://github.com/tkunwar/ucrypt.git.
+
+2. Building ucrypt
+  ucrypt uses static build of libtomcrypt as the core library providing cryptograhy routines. It is 
+  provided with the source of ucrypt. Though new versions of libtomcrypt may also compile correctly but they are not
+  tested. 
+
+  Also libtomcrypt provided was compiled at a  x64 machine so to get 32 bit builds of the library obtain the library
+  for http://libtom.org and compile it with standard configuration. It should build just fine. Don's forget to copy the
+  static library file "libtomcrypt.a" into directory "ucrypt". 
+
+  Also make changes to Makefile-- remove -D_FILE_OFFSET_BITS=64 from the CFALGS. Rest every thing should work fine.
+
+  Enjoy :)
+
+
+
+  
