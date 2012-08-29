@@ -49,6 +49,11 @@ extern "C" {
  * basically three sizes 16bit ,32 bit,64 bits
  * TODO: --write a pure 64 bit code later on (truly cross platform code
  * later on)
+ *
+ * Note : In ILP32 data model following assumptions hold true or must hold true.
+ * sizeof(unsigned short int) : 2 Bytes --  _uint16
+ * sizeof(unsigend long long int) : 8 bytes -- _uint64
+ * sizeof(unsigned long int) : 4 bytes -- _uint32
  */
 #define _int16 short int
 #define _int32 long int
@@ -94,39 +99,19 @@ UCRYPT_BOOL file_exists(char *file);
  * pointed by buff. Again a TRUE will be returned if required no. of bytes
  * were loaded from buffer else FALSE will be returned
  */
-UCRYPT_BOOL store16(_uchar *buff, _uint16 num);
-UCRYPT_BOOL load16(_uchar *buff, _uint16 *num);
-UCRYPT_BOOL store32(_uchar *buff, _uint32 num);
-UCRYPT_BOOL load32(_uchar *buff, _uint32 *num);
-UCRYPT_BOOL store64(_uchar *buff, _uint64 num);
-UCRYPT_BOOL load64(_uchar *buff, _uint64 *num);
+void store16(_uchar *buff, _uint16 num);
+void load16(_uchar *buff, _uint16 *num);
+void store32(_uchar *buff, _uint32 num);
+void load32(_uchar *buff, _uint32 *num);
+void store64(_uchar *buff, _uint64 num);
+void load64(_uchar *buff, _uint64 *num);
 void load_store_test();
 
-#define ATTR_CODE_SIZE sizeof(_uint16) /*in byes means type is _uint16*/
-#define ATTR_LEN_SIZE sizeof(_uint16) 
-#define MAX_PAYLOAD_SIZE sizeof(_uint64) /*8 bytes*/
-#define ATTR_MAX_LEN 1024 /* in bytes*/
-
-/* note that both attr_code and attr_len will need 2 bytes fixed while writing
- * to disc but attr size will vary depending upon what is present in attr_len
- * both attr_code abd attr_len will be stored in unsigned char format requiring
- * 2 bytes of storage.
- *
- * this should work for most of general attributes except payload which the
- * file_frame_read() will be able to read but not write due to its complex  and
- * large storage requirements .Nevertheless it follows the same structure.
- *
- * we will reserve these attr_codes :
- *  0 for end markers once found nothing will be read any more from input
- *  	stream
- *  1 for payload marker
- *  2 for program header -used to verify if the file we are reading is
- *  	something what we really want
- *  3 for FILE_VERSION_INFO
- */
-typedef enum {
-	FRAME_END, PAYLOAD_BEGIN
-} file_frame_t;
+#define ATTR_CODE_SIZE sizeof(unsigned short int)
+#define ATTR_LEN_SIZE sizeof(unsigned short int)
+#define MAX_PAYLOAD_SIZE sizeof(unsigned long long int)
+#define MAX_ATTR_LEN_SIZE sizeof(unsigned long long int)
+#define ATTR_BUFF_LEN 1024 //size of attribute attribute loaded
 
 /*
  * the algorithm notifiers
@@ -135,18 +120,16 @@ typedef enum {
         AES=1, BLOWFISH, CAST
 } crypt_algo_t;
 
-/*
- * actions ucrypt can perform
- */
+// actions ucrypt can perform
 typedef enum{UNINIT, ENCRYPT, DECRYPT,ANALYZE,HELP,VERSION} ucrypt_actions_t;
 
+//attribute codes -- reserved ones
+typedef enum{ATTR_END,ATTR_PAYLOAD,ATTR_HEADER,ATTR_FILE_FORMAT,
+				ATTR_IV,ATTR_HMAC,ATTR_PROG_NAME,ATTR_VERSION,
+				ATTR_CRYPT_ALGO} reserved_attr_codes_t;
 
 typedef struct {
-	/* _uint16 attr_dtype; //attr_dtype helps in identifying whether a attribute
-	 *  holds an integer or a string
-	 * 	0 for _uint16 (as of now)
-	 *	1 for char
-	 *
+	/*
 	 * EDIT: it's inefficient to use an extra byte to identify data type of an
 	 * attribute. We can use it to identify an attribute if it's an integer and
 	 * can be packed but how we do we identify the same when we are reading
@@ -156,12 +139,13 @@ typedef struct {
 	 * only for attr_code and attr_len;
 	 */
 	_uint16 attr_code; /* support max. 65535 codes with each having length max.
-	 65535 bytes*/
+	 	 	 	 	 	 65535 bytes
+	 	 	 	 	 	 */
 	_uint16 attr_len;
-	const unsigned char *attr; /* some compliers will report (gcc does) about size
-	 mismatch if u have declared attr as
-	 char attr[SOME_CONSTANT] so better use
-	 const char *attr */
+	const unsigned char *attr; /* some compliers will report (gcc does) about
+	 	 	 	 	 	 	 	 size mismatch if u have declared attr as
+	 	 	 	 	 	 	 	 char attr[SOME_CONSTANT] so better use
+	 	 	 	 	 	 	 	 const char *attr */
 } file_frame;
 
 /* there does not seem to be an effective way of determining the frame_array
@@ -231,8 +215,8 @@ void base64_cleanup();
  * variables not being used. This is ok.
  */
 #ifdef _HAVE_LOGGER_C99_
-#define sdebug(s) fprintf(stderr, "[" __FILE__ ":%i] debug: " s "\n",__LINE__)
-#define var_debug(s, ...) fprintf(stderr, "[" __FILE__ ":%i] debug: " s "\n",\
+#define sdebug(s) fprintf(stderr, "\n[" __FILE__ ":%i] debug: " s "",__LINE__)
+#define var_debug(s, ...) fprintf(stderr, "\n[" __FILE__ ":%i] debug: " s "" ,\
 	__LINE__,__VA_ARGS__)
 #endif
 #else
@@ -274,10 +258,6 @@ void base64_cleanup();
 #endif
 
 #define MAX_PROG_NAME 200
-#define MAX_FILE_LEN 2048 /* should be enough --though a proper path_len
-							  should be used. using system's PATH_LEN (or
-							  pathconf() ) should be enough but is not that a
-							  too big value*/
 
 /*
  * logging modes :
@@ -295,11 +275,11 @@ typedef struct {
 	log_mod_t mode;
 	FILE *fp;_uint16 priority; //only seven priorities _uint16 should be enough
 	pid_t pid;
-	char fname[MAX_FILE_LEN];
+	char fname[FILE_PATH_LEN];
 } logger;
 
 //initialize a logger object
-UCRYPT_BOOL log_init(logger *l);
+UCRYPT_ERR log_init(logger *l);
 
 /*
  * passing logger objects ensures that code will be safe from any modification
@@ -309,7 +289,7 @@ UCRYPT_BOOL log_init(logger *l);
 void log_msg(logger l, const char*msg);
 
 // modify logger's priority
-UCRYPT_BOOL set_logmask(logger *l, _uint16 UPTO_PRIO);
+UCRYPT_ERR set_logmask(logger *l, _uint16 UPTO_PRIO);
 
 //we are done close the logger object
 void close_log(logger l);

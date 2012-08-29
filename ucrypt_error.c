@@ -1,48 +1,118 @@
 /*
  * ucrypt_error.c
- * here we store error codes 
  */
 #include "ucrypt_common.h"
 
-/* use enums for this purpose , can avoid searching in the table*/
-ucrypt_error_table ucrypt_err[] = {
-		{ UCRYPT_ERR_INVALID_ARGS,"Arguments supplied are not in proper form ."
-				" Use ucrypt --help to see options." },
-		{ UCRYPT_ERR_INVALID_COMMAND,"No action defined (use with --encrypt|"
-				"--decrypt|--analyze|--help|--version)" },
-		{ UCRYPT_ERR_FILE_CREATE, "Failed to create output file."},
-		{UCRYPT_ERR_FILE_OPEN,"Failed to open file."},
-		{UCRYPT_ERR_IV_GEN,"Could not generate IV."},
-		{ 30, "Output file already exists." },
-		{ 31, "Failed to write header (XMP tag)." }, { 32,
-				"Failed to write extension header (info_tag)" }, { 33,
-				"Extension size too big (max. allowed 0xFF bytes)." }, { 34,
-				"Target file does not exist." }, { 35,
-				"Input file too short or unsupported file." },
-
-		{ 40, "Key length must be greater than or equal to 128 bits." }, { 41,
-				"Bad file header (not a supported file or is it corrupted?)" },
-		{ 42, "File format unsupported.!!" }, { 43,
-				"Could not load extension tag!!" }, { 44,
-				"Extension header size mismatch" }, { 50,
-				"Crypt algorithm is unsupported" }, { 51,
-				"Provided key is not of proper length" }, { 52,
-				"Provided IV is not of proper length" }, { 53,
-				"Cyrpto Handler state not initialized.." }, { 54,
-				"Failed to complete encryption.." }, { 55,
-				"Failed to initialize CTR mode." }, { 56, "File read error" }, {
-				57, "Crypt_error: Failed to write output stream" }, { 58,
-				"Failed to complete decryption" }, { 59,
-				"Crypt_error: Algorithm not supported!!(Invalid state?)" }, {
-				60, "Failed to save HMAC" }, { 61,
-				"File checksum error.(Hash mismatch)" } };
-_uint16 ucrypt_err_size = sizeof(ucrypt_err) / sizeof(ucrypt_err[0]);
-
+/*
+ * @@ucrypt_log_error()
+ * Description: Prints the error messages. It takes an error code and prints
+ * 				its equivalent error string.
+ */
 void ucrypt_log_error(unsigned int error_code) {
-	fprintf(UCRYPT_STDERR,
-			"\n%s  Version: %s.%s compiled :%s",
-			PROG_NAME, PROG_VERSION_MAJOR, PROG_VERSION_MINOR, PROG_DATE);
-	fprintf(UCRYPT_STDERR, "\nError : %s (Error_code=%d)",
-			ucrypt_err[error_code].err_string, error_code);
+	/*
+	 * TODO: cant we pass multiple parapeters(variable) to ucrypt_log_error()
+	 * the error code is a mandatory parameter but others are optional
+	 */
+	fprintf(UCRYPT_STDERR, "\n%s: *Error*: ", PROG_NAME);
+	switch (error_code) {
+	case UCRYPT_ERR_INVALID_ARGS:
+		fprintf(UCRYPT_STDERR, "Arguments supplied are not in proper form.");
+		break;
+	case UCRYPT_ERR_INVALID_COMMAND:
+		fprintf(UCRYPT_STDERR, "No action defined (use with --encrypt|"
+				"--decrypt|--analyze|--help|--version).");
+		break;
+	case UCRYPT_ERR_PATH_LIMIT:
+		fprintf(UCRYPT_STDERR, "Output file name too long.");
+		break;
+	case UCRYPT_ERR_FILE_CREATE:
+		fprintf(UCRYPT_STDERR, "Failed to create file.");
+		break;
+	case UCRYPT_ERR_TTY:
+		fprintf(UCRYPT_STDERR, "Failed to access tty.");
+		break;
+	case UCRYPT_ERR_FILE_OPEN:
+		fprintf(UCRYPT_STDERR, "Failed to open file.");
+		break;
+	case UCRYPT_ERR_FILE_READ:
+		fprintf(UCRYPT_STDERR, "Failed to read data from file.");
+		break;
+	case UCRYPT_ERR_FILE_WRITE:
+		fprintf(UCRYPT_STDERR, "Failed to write data to file.");
+		break;
+	case UCRYPT_ERR_INVALID_ALGO:
+		fprintf(UCRYPT_STDERR, "Failed to determine crypto algorithm.");
+		break;
+	case UCRYPT_ERR_IV_GEN:
+		fprintf(UCRYPT_STDERR, "IV generation failed.");
+		break;
+	case UCRYPT_ERR_IV_LOAD:
+		fprintf(UCRYPT_STDERR, "Failed to load IV.");
+		break;
+	case UCRYPT_ERR_KEY_GEN:
+		fprintf(UCRYPT_STDERR, "Key generation failed.");
+		break;
+	case UCRYPT_ERR_HEADER_GEN:
+		fprintf(UCRYPT_STDERR, "Failed to write header.");
+		break;
+	case UCRYPT_ERR_HEADER_READ:
+		fprintf(UCRYPT_STDERR, "Failed to read header.");
+		break;
+	case UCRYPT_ERR_VERSION_INCOMPAT:
+		fprintf(UCRYPT_STDERR, "Incompatible file.");
+		break;
+	case UCRYPT_ERR_CRYPT:
+		fprintf(UCRYPT_STDERR, "An error occurred in the encryption process.");
+		break;
+	case UCRYPT_ERR_DCRYPT:
+		fprintf(UCRYPT_STDERR, "An error occurred in the decryption process.");
+		break;
+	case UCRYPT_ERR_ATTR_LOAD:
+		fprintf(UCRYPT_STDERR, "Could not read value for attribute.");
+		break;
+	case UCRYPT_ERR_HMAC_ATTACH:
+		fprintf(UCRYPT_STDERR, "Failed to write HMAC.");
+		break;
+	case UCRYPT_ERR_HMAC_VERIFY:
+		fprintf(UCRYPT_STDERR, "HMAC verification failed.");
+		break;
+	case UCRYPT_ERR_PASSWD_READ:
+		fprintf(UCRYPT_STDERR, "Could not read password.");
+		break;
+	case UCRYPT_ERR_FRAME_READ:
+		fprintf(UCRYPT_STDERR, "Failed to read frame.");
+		break;
+	case UCRYPT_ERR_ATTR_INVALID_CODE:
+		fprintf(UCRYPT_STDERR,
+				"Frame Read Error: ATTR_CODE missing or invalid.");
+		break;
+	case UCRYPT_ERR_ATTR_INVALID_LEN:
+		fprintf(UCRYPT_STDERR,
+				"Frame Read Error: ATTR_LEN missing or invalid.");
+		break;
+	case UCRYPT_ERR_ATTR_INVALID_DATA:
+		fprintf(UCRYPT_STDERR,
+				"Frame Read Error: ATTR_DATA missing or invalid.");
+		break;
+	case UCRYPT_ERR_FRAME_WRITE:
+		fprintf(UCRYPT_STDERR, "Failed to write frame markers.");
+		break;
+	case UCRYPT_ERR_LOG_INIT:
+		fprintf(UCRYPT_STDERR, "Failed to initialize logger interface.");
+		break;
+	case UCRYPT_ERR_MEM:
+		fprintf(UCRYPT_STDERR, "Failed to allocate memory.");
+		break;
+	case UCRYPT_ERR_INVALID_JOBQ:
+		fprintf(UCRYPT_STDERR, "No jobs to process or invalid job list.");
+		break;
+	case UCRYPT_ERR_GENERIC:
+		fprintf(UCRYPT_STDERR, "An unhandled error occurred.");
+		break;
 
+	default:
+		fprintf(UCRYPT_STDERR, "Undefined error code.");
+		break;
+	}
+	fprintf(UCRYPT_STDERR, "(Error code:0x%x)", error_code);
 }

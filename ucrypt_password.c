@@ -21,44 +21,12 @@
  */
 
 #include "ucrypt_common.h"
-
 /*
- *  read_password_error
- *
- *  Returns the description of the error when reading the password.
+ * @@read_password()
+ * Description: reads password from console and stores the read password to
+ * 				buffer. Also returns the no. of chars read.
  */
-const char* read_password_error(int error) {
-	if (error == AESCRYPT_READPWD_FOPEN)
-		return "fopen()";
-	if (error == AESCRYPT_READPWD_FILENO)
-		return "fileno()";
-	if (error == AESCRYPT_READPWD_TCGETATTR)
-		return "tcgetattr()";
-	if (error == AESCRYPT_READPWD_TCSETATTR)
-		return "tcsetattr()";
-	if (error == AESCRYPT_READPWD_FGETC)
-		return "fgetc()";
-	if (error == AESCRYPT_READPWD_TOOLONG)
-		return "password too long";
-	if (error == AESCRYPT_READPWD_NOMATCH)
-		return "passwords don't match";
-	return "No valid error code specified!!!";
-}
-
-/*
- *  read_password
- *
- *  This function reads at most 'MAX_PASSPHRASE_LEN'-1 characters
- *  from the TTY with echo disabled, putting them in 'buffer'.
- *  'buffer' MUST BE ALREADY ALLOCATED!!!
- *  When mode is ENC the function requests password confirmation.
- *
- *  Return value:
- *    >= 0 the password length (0 if empty password is in input)
- *    < 0 error (return value indicating the specific error)
- */
-
-int read_password(char* buffer) {
+unsigned short int read_password(char* buffer, int *pass_len) {
 	struct termios t; // Used to set ECHO attribute
 	int echo_enabled; // Was echo enabled?
 	int tty; // File descriptor for tty
@@ -70,20 +38,22 @@ int read_password(char* buffer) {
 	// Open the tty
 	ftty = fopen("/dev/tty", "r+");
 	if (ftty == NULL) {
-		return AESCRYPT_READPWD_FOPEN;
+		ucrypt_log_error(UCRYPT_ERR_TTY);
+		return UCRYPT_ERR_TTY;
 	}
 	tty = fileno(ftty);
 	if (tty < 0) {
-		return AESCRYPT_READPWD_FILENO;
+		ucrypt_log_error(UCRYPT_ERR_TTY);
+		return UCRYPT_ERR_TTY;
 	}
 
 	// Get the tty attrs
 	if (tcgetattr(tty, &t) < 0) {
 		fclose(ftty);
-		return AESCRYPT_READPWD_TCGETATTR;
+		ucrypt_log_error(UCRYPT_ERR_TTY);
+		return UCRYPT_ERR_TTY;
 	}
 
-	// Round 1 - Read the password into buffer
 	// Choose the buffer where to put the password
 	p = buffer;
 
@@ -97,7 +67,8 @@ int read_password(char* buffer) {
 			// For security reasons, erase the password
 			memset(buffer, 0, MAX_PASSPHRASE_LEN + 1);
 			fclose(ftty);
-			return AESCRYPT_READPWD_TCSETATTR;
+			ucrypt_log_error(UCRYPT_ERR_TTY);
+			return UCRYPT_ERR_TTY;
 		}
 		echo_enabled = 1;
 	} else {
@@ -125,7 +96,8 @@ int read_password(char* buffer) {
 			// For security reasons, erase the password
 			memset(buffer, 0, MAX_PASSPHRASE_LEN + 1);
 			fclose(ftty);
-			return AESCRYPT_READPWD_TCSETATTR;
+			ucrypt_log_error(UCRYPT_ERR_PASSWD_READ);;
+			return UCRYPT_ERR_PASSWD_READ;
 		}
 	}
 
@@ -134,7 +106,8 @@ int read_password(char* buffer) {
 		// For security reasons, erase the password
 		memset(buffer, 0, MAX_PASSPHRASE_LEN + 1);
 		fclose(ftty);
-		return AESCRYPT_READPWD_FGETC;
+		ucrypt_log_error(UCRYPT_ERR_PASSWD_READ);;
+		return UCRYPT_ERR_PASSWD_READ;
 	}
 
 	// Check chars_read.  The password must be maximum MAX_PASSPHRASE_LEN
@@ -143,53 +116,12 @@ int read_password(char* buffer) {
 		// For security reasons, erase the password
 		memset(buffer, 0, MAX_PASSPHRASE_LEN + 1);
 		fclose(ftty);
-		return AESCRYPT_READPWD_TOOLONG;
+		ucrypt_log_error(UCRYPT_ERR_PASSWD_READ);;
+		return UCRYPT_ERR_PASSWD_READ;
 	}
 
 	// Close the tty
 	fclose(ftty);
-	return chars_read;
+	*pass_len=chars_read;
+	return UCRYPT_OK;
 }
-
-/*
- *  passwd_to_utf16
- *
- *  Convert String to UTF-16LE for windows compatibility
- */
-int passwd_to_utf16(char *in_passwd, int length, int max_length,
-		char *out_passwd) {
-	char *ic_outbuf, *ic_inbuf;
-	iconv_t condesc;
-	size_t ic_inbytesleft, ic_outbytesleft;
-	extern int errno;
-	ic_inbuf = in_passwd;
-	ic_inbytesleft = length;
-	ic_outbytesleft = max_length;
-	ic_outbuf = out_passwd;
-
-	if ((condesc = iconv_open("UTF-16LE", nl_langinfo(CODESET)))
-			== (iconv_t) (-1)) {
-		perror("Error in iconv_open");
-		return -1;
-	}
-
-	if (iconv(condesc, &ic_inbuf, &ic_inbytesleft, &ic_outbuf, &ic_outbytesleft)
-			== -1) {
-		switch (errno) {
-		case E2BIG:
-			fprintf(stderr, "Error: password too long\n");
-			iconv_close(condesc);
-			return -1;
-			break;
-		default:
-			//~ printf("EILSEQ(%d), EINVAL(%d), %d\n", EILSEQ, EINVAL, errno);
-			fprintf(stderr,
-					"Error: Invalid or incomplete multibyte sequence\n");
-			iconv_close(condesc);
-			return -1;
-		}
-	}
-	iconv_close(condesc);
-	return (max_length - ic_outbytesleft);
-}
-

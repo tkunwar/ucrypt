@@ -12,8 +12,7 @@ extern "C" {
 #endif
 #include "ucrypt_common.h"
 
-/*this structure will contain parametres what we will recieve
- * along with actual data that will be used
+/* this structure will contain parametres what we will recieve
  */
 typedef struct {
 	crypt_algo_t crypt_algo;
@@ -23,13 +22,11 @@ typedef struct {
 	_uint16 iv_len;
 } crypt_handler_state;
 
-
+//init the crypt_handler_state
 void crypt_handler_init(crypt_handler_state *s,
 		crypt_algo_t crypt_algo, const unsigned char *key, _uint16 key_len,
 		const unsigned char *iv, _uint16 iv_len);
 
-/*do the encryption by writing data to outfp while encrypting stream from infp
- */
 UCRYPT_ERR crypt_handler_encrypt(crypt_handler_state *s, FILE *infp,
 		FILE *outfp);
 
