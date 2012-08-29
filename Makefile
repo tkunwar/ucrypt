@@ -25,11 +25,11 @@ install: ucrypt
 uninstall:
 	rm -f /opt/ucrypt
 encrypt:
-	./ucrypt --encrypt --src_file=test.pdf --out_file=test.pdf.enc --crypt_algo=blowfish --pass=system@123
+	./ucrypt --encrypt --crypt_algo=blowfish --pass=system@123 test.pdf
 analyze:
-	./ucrypt --analyze --src_file=test.pdf.enc
+	./ucrypt --analyze test.pdf.uff
 decrypt:
-	./ucrypt --decrypt --src_file=test.pdf.enc --out_file=test_decrypted.pdf --pass=system@123
+	./ucrypt --decrypt --pass=system@123 test.pdf.uff
 	
 clean:
 	rm -f *.o *.out ucrypt
