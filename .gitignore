@@ -1,8 +1,10 @@
 Makefile.blowfish
 Makefile.cast5
 test.pdf.enc
+test_decrypted.pdf
 .cproject
 .project
+ucrypt
 
 # Compiled source #
 ###################
