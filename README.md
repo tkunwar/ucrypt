@@ -7,7 +7,7 @@ ucrypt uses libtomcrypt as the core for cryptography rotuines. See more about
 libtomcrypt at http://libtom.org .
 
 Ucrypt is free as in everything. Do whatever you want with it but at
-you at your own risk.
+at your own risk.
 
 Tej Narayan Kunwar
 (kunwar_tej@outlook.com)
