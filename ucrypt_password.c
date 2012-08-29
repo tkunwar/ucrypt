@@ -1,32 +1,14 @@
 /*
- * ucrypt_password.c and ucrypt_password.h -- taken from AEScrypt
- *
- * AES Crypt for Linux
- * Copyright (C) 2007, 2008, 2009
- *
- * Contributors:
- *     Glenn Washburn <crass@berlios.de>
- *     Paul E. Jones <paulej@packetizer.com>
- *     Mauro Gilardi <galvao.m@gmail.com>
- *
- * This software is licensed as "freeware."  Permission to distribute
- * this software in source and binary forms is hereby granted without a
- * fee.  THIS SOFTWARE IS PROVIDED 'AS IS' AND WITHOUT ANY EXPRESSED OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- * THE AUTHOR SHALL NOT BE HELD LIABLE FOR ANY DAMAGES RESULTING FROM
- * THE USE OF THIS SOFTWARE, EITHER DIRECTLY OR INDIRECTLY, INCLUDING,
- * BUT NOT LIMITED TO, LOSS OF DATA OR DATA BEING RENDERED INACCURATE.
- *
+ * ucrypt_password.c
  */
-
 #include "ucrypt_common.h"
+
 /*
  * @@read_password()
  * Description: reads password from console and stores the read password to
  * 				buffer. Also returns the no. of chars read.
  */
-unsigned short int read_password(char* buffer, int *pass_len) {
+unsigned short int read_password(char* buffer,unsigned short int *pass_len) {
 	struct termios t; // Used to set ECHO attribute
 	int echo_enabled; // Was echo enabled?
 	int tty; // File descriptor for tty

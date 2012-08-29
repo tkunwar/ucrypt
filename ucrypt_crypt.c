@@ -785,10 +785,7 @@ unsigned int get_key_size(crypt_algo_t algo) {
  * 				ucrypt_state.global_settings.passphrase
  */
 UCRYPT_ERR get_password(char *passphrase, _uint16 *pass_len) {
-
-	int input_pass_len;
 	if(read_password(passphrase,pass_len)!= UCRYPT_OK){
-		fprintf(stderr, "Error: No password supplied.\n");
 		return UCRYPT_ERR_PASSWD_READ;
 	}
 	return UCRYPT_OK;
