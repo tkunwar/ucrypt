@@ -5,6 +5,8 @@ test_decrypted.pdf
 .cproject
 .project
 ucrypt
+.cproject
+.settings
 
 # Compiled source #
 ###################
