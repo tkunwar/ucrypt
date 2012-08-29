@@ -1,3 +1,7 @@
+This document outlines general design, and coding approach followed. It may 
+also include features already built or expected. As such it provides general
+theory behind ucrypt development.
+
 
 1. algorithm supported  :
 	<algoirthms> :
@@ -46,6 +50,7 @@
 	
 	Both these modes are exclusive to each other - at a time one it will run in 
 	only one of these modes.
+	**Note** : When in batch mode we  will ignore some/more parameters
 	
 	1. Accept arguments from commandline:
 		1. Action can be only one
@@ -76,10 +81,20 @@
 			Two sections :
 			1. config section and 2. job description section
 			
-			About Config section:
+			1. About Config section:
 				config section specifies the global options for the entire job
 				file. 
-			config=  
+			config={crypt_algo="aes";
+					pass="system@123";
+					global="true";
+					};
+			2. About job description section:
+				Feilds needed <file_path>,<crypt_algo>,<passphrase>. Note that
+				fields <crypt_algo> and <passphrase> are not needed if <global>
+				fields is set to true in config section. 
+				job_list={{"file1","aes","system@123"},
+						   {"file2","blowfish","213#hsjd"}
+				} ;
 	
 7.	General Information :
 	File format : "uff" : "ucrypt file format"
@@ -90,3 +105,19 @@
 		   this extension must be present in every file that needs to be 
 		   decrypted.
 		2. Files not ending with ".uff" will not be decrypted.
+		
+8.	Error reporting :
+	We will be dealing with debugging messages,warning and error messages. Now 
+	for debugging messages and warning messages, use sdebug()/var_debug() and 
+	swarn()/var_warn() macros respectively however for error reporting make 
+	use of ucrypt_log_error(error_code).
+	 
+	The error codes passed to ucrypt_log_error() will also be returned to the
+	caller routine. Note that error will be reported only at the origin location
+	and no error reporting in backward control propagation, only error code 
+	will be returned to caller.
+	
+	routines retutn UCRYPT_OK or an error code of ucrypt_codes_t where an error 
+	is expected, do not use TRUE or FALSE as return variables when you need to
+	check for an error condition. TRUE and FALSE should be used for comparison,
+	assignment as in flag values.
